@@ -1,0 +1,169 @@
+# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+
+# dependencies
+/node_modules
+/.pnp
+.pnp.js
+
+# testing
+/coverage
+
+# next.js
+/.next/
+/out/
+
+# production
+/build
+
+# misc
+.DS_Store
+*.pem
+
+# debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# local env files
+.env*.local
+.env
+.env.development
+.env.production
+.env.test
+
+# vercel
+.vercel
+
+# typescript
+*.tsbuildinfo
+next-env.d.ts
+
+# Excel data files (optional - remove this line if you want to commit the Excel file)
+/data/*.xlsx
+
+# Security and Credentials
+# Environment variables and secrets
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# API Keys and Secrets
+*.key
+*.pem
+*.p12
+*.pfx
+secrets.json
+credentials.json
+service-account-key.json
+
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+
+# Log files (may contain sensitive data)
+*.log
+logs/
+log/
+
+# Cache and temporary files
+.cache/
+.tmp/
+temp/
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS generated files
+Thumbs.db
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+
+# Backup files
+*.bak
+*.backup
+*.old
+
+# Certificate files
+*.crt
+*.cert
+*.pem
+*.key
+
+# Google Sheets API credentials
+google-sheets-credentials.json
+service-account-*.json
+
+# Email configuration files
+email-config.json
+smtp-config.json
+
+# Admin credentials (if any are stored as files)
+admin-credentials.json
+auth-config.json
+
+# Additional security files
+.env.example
+.env.template
+*.env
+.envrc
+.env.local.backup
+.env.production.backup
+
+# Database backups
+*.sql
+*.dump
+*.backup.sql
+
+# SSL certificates
+*.crt
+*.pem
+*.p12
+*.pfx
+*.key
+
+# API documentation with keys
+api-docs.md
+swagger.json
+openapi.json
+
+# Local development files
+.local
+local/
+dev/
+development/
+
+# Monitoring and analytics (may contain sensitive data)
+analytics/
+monitoring/
+logs/
+*.log
+
+# Test files with sensitive data
+test-*.json
+test-*.js
+test-*.ts
+
+# Deployment files
+deploy/
+deployment/
+*.deploy
+*.deployment
+
+# Backup and archive files
+*.tar
+*.tar.gz
+*.zip
+*.rar
+backup/
+archive/
