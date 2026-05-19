@@ -838,8 +838,8 @@ export default function AISeekhoDay() {
                 },
                 {
                   name: "Usman Ali",
-                  role: "Google Developer Expert",
-                  company: "GDG Lahore",
+                  role: "Senior AI Architect",
+                  company: "Tech Solutions",
                   expertise: "Flutter & AI",
                   color: "from-orange-500 to-red-600",
                   emoji: "📱",
@@ -856,8 +856,8 @@ export default function AISeekhoDay() {
                 },
                 {
                   name: "Zain Rizvi",
-                  role: "Tech Community Leader",
-                  company: "GDG Cloud Lahore",
+                  role: "Cloud Platform Expert",
+                  company: "DevOps Global",
                   expertise: "Cloud & DevOps",
                   color: "from-teal-500 to-blue-600",
                   emoji: "☁️",
@@ -954,7 +954,7 @@ export default function AISeekhoDay() {
                 className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-bold px-8 py-4 rounded-xl shadow-lg transform hover:scale-105 transition-all duration-300 group"
               >
                 <Zap className="w-5 h-5 mr-3 group-hover:animate-bounce" />
-                
+                Register Now
                 <ArrowRight className="w-5 h-5 ml-3 group-hover:translate-x-2 transition-transform" />
               </Button>
             </div>
@@ -1170,13 +1170,13 @@ export default function AISeekhoDay() {
 
           <div className="grid grid-cols-2 md:grid-cols-3 gap-8 items-center justify-items-center">
             <div className="bg-gray-100 p-8 rounded-lg w-full h-24 flex items-center justify-center">
-              <span className="text-gray-600 font-medium">GDG Lahore</span>
+              <span className="text-gray-600 font-medium">Dept of Computer Science</span>
             </div>
             <div className="bg-gray-100 p-8 rounded-lg w-full h-24 flex items-center justify-center">
-              <span className="text-gray-600 font-medium">GDG Cloud Lahore</span>
+              <span className="text-gray-600 font-medium">NFC-IET Multan</span>
             </div>
             <div className="bg-gray-100 p-8 rounded-lg w-full h-24 flex items-center justify-center">
-              <Image src="/placeholder-logo.svg" alt="NFC-IET" width={80} height={40} className="object-contain" />
+              <span className="text-gray-600 font-medium">HEC Pakistan</span>
             </div>
           </div>
         </div>
@@ -1324,7 +1324,7 @@ export default function AISeekhoDay() {
 </a>
 
 <a
-  href="https://chat.whatsapp.com/KjhcYpc8ZoI777OxE4REOz?mode=ac_t"
+  href="https://wa.me/923063754907"
   target="_blank"
   rel="noopener noreferrer"
   className="inline-block"
@@ -1335,7 +1335,7 @@ export default function AISeekhoDay() {
     className="border-2 border-gray-300 hover:border-blue-500 text-gray-700 hover:text-blue-600 font-bold px-8 py-4 rounded-xl transition-all duration-300"
   >
     <Users className="w-5 h-5 mr-3" />
-    Join WhatsApp Group
+    Contact via WhatsApp
   </Button>
 </a>
 
@@ -1463,12 +1463,12 @@ export default function AISeekhoDay() {
                   <div>
   <p className="text-sm text-gray-400">Phone</p>
   <a
-    href="https://chat.whatsapp.com/KjhcYpc8ZoI777OxE4REOz?mode=ac_t"
+    href="https://wa.me/923063754907"
     target="_blank"
     rel="noopener noreferrer"
     className="text-white underline hover:text-green-400 transition"
   >
-    Join WhatsApp Group
+    +92 306 3754907
   </a>
 </div>
 

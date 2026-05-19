@@ -504,13 +504,13 @@ export default function RegistrationPage() {
                   
                   </div>
                   <a
-  href="https://chat.whatsapp.com/KjhcYpc8ZoI777OxE4REOz?mode=ac_t"
+  href="https://wa.me/923063754907"
   target="_blank"
   rel="noopener noreferrer"
   className="w-full flex items-center justify-center bg-gradient-to-r from-blue-500 to-purple-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:opacity-90 transition"
 >
   <Users className="w-4 h-4 mr-2" />
-  Join WhatsApp Group
+  Contact via WhatsApp
 </a>
 
                 </CardContent>
