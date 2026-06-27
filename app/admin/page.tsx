@@ -2,14 +2,18 @@
 
 import { EVENT_CONFIG } from "@/lib/config"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, lazy, Suspense } from "react"
 import { useRouter } from "next/navigation"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Users, Mail, Phone, GraduationCap, RefreshCw, Download, CheckCircle, XCircle, Lock, Eye, EyeOff, Menu, X, Home } from "lucide-react"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Textarea } from "@/components/ui/textarea"
+import { Users, Mail, Phone, GraduationCap, RefreshCw, Download, CheckCircle, XCircle, Lock, Eye, EyeOff, Menu, X, Home, QrCode, UserCheck, Pencil, Trash2, Save } from "lucide-react"
+
+const QrScanner = lazy(() => import("@/components/qr-scanner").then((m) => ({ default: m.QrScanner })))
 
 interface Registration {
   id: number
@@ -21,6 +25,8 @@ interface Registration {
   interests?: string
   team_name?: string
   participation_type?: string
+  attended?: boolean
+  attended_at?: string
   created_at: string
 }
 
@@ -55,7 +61,14 @@ export default function AdminDashboard() {
   const [registrations, setRegistrations] = useState<Registration[]>([])
   const [stats, setStats] = useState<Stats | null>(null)
   const [loading, setLoading] = useState(true)
+  const [showScanner, setShowScanner] = useState(false)
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [googleSheetsConfigured, setGoogleSheetsConfigured] = useState<boolean | null>(null)
+  const [editingId, setEditingId] = useState<number | null>(null)
+  const [editForm, setEditForm] = useState<Partial<Registration>>({})
+  const [isSaving, setIsSaving] = useState(false)
+  const [deleteConfirmId, setDeleteConfirmId] = useState<number | null>(null)
+  const [isDeleting, setIsDeleting] = useState(false)
 
   useEffect(() => {
     checkAuthStatus()
@@ -306,6 +319,62 @@ export default function AdminDashboard() {
     }
   }
 
+  const startEdit = (reg: Registration) => {
+    setEditingId(reg.id)
+    setEditForm({
+      name: reg.name,
+      phone: reg.phone,
+      university: reg.university,
+      experience: reg.experience ?? "",
+      interests: reg.interests ?? "",
+      team_name: reg.team_name ?? "",
+      participation_type: reg.participation_type ?? "",
+    })
+  }
+
+  const cancelEdit = () => {
+    setEditingId(null)
+    setEditForm({})
+  }
+
+  const saveEdit = async (id: number) => {
+    setIsSaving(true)
+    try {
+      const token = localStorage.getItem("admin_token")
+      const res = await fetch(`/api/registrations/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify(editForm),
+      })
+      if (res.ok) {
+        const updated = await res.json()
+        setRegistrations((prev) => prev.map((r) => (r.id === id ? { ...r, ...updated } : r)))
+        setEditingId(null)
+        setEditForm({})
+      }
+    } finally {
+      setIsSaving(false)
+    }
+  }
+
+  const confirmDelete = async (id: number) => {
+    setIsDeleting(true)
+    try {
+      const token = localStorage.getItem("admin_token")
+      const res = await fetch(`/api/registrations/${id}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      if (res.ok) {
+        setRegistrations((prev) => prev.filter((r) => r.id !== id))
+        setStats((prev) => prev ? { ...prev, total: prev.total - 1 } : prev)
+      }
+    } finally {
+      setIsDeleting(false)
+      setDeleteConfirmId(null)
+    }
+  }
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
@@ -422,8 +491,15 @@ export default function AdminDashboard() {
     )
   }
 
+  const adminToken = typeof window !== "undefined" ? localStorage.getItem("admin_token") ?? "" : ""
+
   return (
     <div className="min-h-screen bg-gray-50">
+      {showScanner && (
+        <Suspense fallback={null}>
+          <QrScanner adminToken={adminToken} onClose={() => setShowScanner(false)} />
+        </Suspense>
+      )}
       {/* Responsive Header */}
       <div className="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -443,10 +519,15 @@ export default function AdminDashboard() {
             
             {/* Desktop Actions */}
             <div className="hidden sm:flex items-center space-x-2">
+              <Button onClick={() => setShowScanner(true)} size="sm" className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white">
+                <QrCode className="w-4 h-4 mr-2" />
+                <span className="hidden lg:inline">Scan QR</span>
+                <span className="lg:hidden">Scan</span>
+              </Button>
               <Button onClick={handleExport} variant="outline" size="sm">
-                                 <Download className="w-4 h-4 mr-2" />
-                 <span className="hidden lg:inline">Export CSV</span>
-                 <span className="lg:hidden">Export</span>
+                <Download className="w-4 h-4 mr-2" />
+                <span className="hidden lg:inline">Export CSV</span>
+                <span className="lg:hidden">Export</span>
               </Button>
               <Button onClick={fetchData} variant="outline" size="sm">
                 <RefreshCw className="w-4 h-4 mr-2" />
@@ -480,12 +561,16 @@ export default function AdminDashboard() {
           </div>
 
           {/* Mobile Menu */}
-          <div className={`sm:hidden transition-all duration-300 ease-in-out ${showMobileMenu ? 'max-h-64 opacity-100' : 'max-h-0 opacity-0'} overflow-hidden`}>
+          <div className={`sm:hidden transition-all duration-300 ease-in-out ${showMobileMenu ? 'max-h-80 opacity-100' : 'max-h-0 opacity-0'} overflow-hidden`}>
             <div className="py-4 space-y-3 border-t border-gray-200 bg-gray-50/50">
-                             <Button onClick={handleExport} variant="outline" size="sm" className="w-full justify-start h-12 text-base">
-                 <Download className="w-5 h-5 mr-3" />
-                 Export CSV
-               </Button>
+              <Button onClick={() => { setShowScanner(true); setShowMobileMenu(false) }} size="sm" className="w-full justify-start h-12 text-base bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white">
+                <QrCode className="w-5 h-5 mr-3" />
+                Scan QR Code
+              </Button>
+              <Button onClick={handleExport} variant="outline" size="sm" className="w-full justify-start h-12 text-base">
+                <Download className="w-5 h-5 mr-3" />
+                Export CSV
+              </Button>
               <Button onClick={fetchData} variant="outline" size="sm" className="w-full justify-start h-12 text-base">
                 <RefreshCw className="w-5 h-5 mr-3" />
                 Refresh Data
@@ -563,6 +648,19 @@ export default function AdminDashboard() {
                 </div>
               </CardContent>
             </Card>
+
+            <Card className="hover:shadow-lg transition-shadow border-green-200 bg-green-50">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium text-green-800">Attended</CardTitle>
+                <UserCheck className="h-4 w-4 text-green-600" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-green-700">
+                  {registrations.filter((r) => r.attended).length}
+                </div>
+                <p className="text-xs text-green-600 mt-1">of {stats.total} registered</p>
+              </CardContent>
+            </Card>
           </div>
         )}
 
@@ -574,65 +672,159 @@ export default function AdminDashboard() {
           </CardHeader>
           <CardContent className="p-4 sm:p-6">
             <div className="space-y-4">
-              {registrations.map((registration) => (
-                <div key={registration.id} className="border rounded-lg p-4 hover:bg-gray-50 transition-colors">
-                  <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start space-y-3 sm:space-y-0">
-                    <div className="flex-1">
-                      <h3 className="font-semibold text-base sm:text-lg text-gray-900">{registration.name}</h3>
-                      
-                      {/* Contact Info - Responsive Layout */}
-                      <div className="mt-2 space-y-1 sm:space-y-0 sm:space-x-4 sm:flex sm:items-center text-sm text-gray-600">
-                        <div className="flex items-center space-x-1">
-                          <Mail className="w-4 h-4" />
-                          <span className="truncate">{registration.email}</span>
-                        </div>
-                        <div className="flex items-center space-x-1">
-                          <Phone className="w-4 h-4" />
-                          <span>{registration.phone}</span>
-                        </div>
-                        <div className="flex items-center space-x-1">
-                          <GraduationCap className="w-4 h-4" />
-                          <span className="truncate">{registration.university}</span>
+              {registrations.map((registration) => {
+                const isEditing = editingId === registration.id
+                const isConfirmingDelete = deleteConfirmId === registration.id
+
+                return (
+                  <div key={registration.id} className={`border rounded-lg p-4 transition-colors ${isEditing ? "bg-blue-50 border-blue-200" : "hover:bg-gray-50"}`}>
+                    {/* Header row: name + date + action buttons */}
+                    <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-2">
+                      <div className="flex-1 min-w-0">
+                        <h3 className="font-semibold text-base sm:text-lg text-gray-900">{registration.name}</h3>
+                        <div className="mt-1 space-y-1 sm:space-y-0 sm:space-x-4 sm:flex sm:items-center text-sm text-gray-600">
+                          <div className="flex items-center space-x-1">
+                            <Mail className="w-4 h-4 shrink-0" />
+                            <span className="truncate">{registration.email}</span>
+                          </div>
+                          <div className="flex items-center space-x-1">
+                            <Phone className="w-4 h-4 shrink-0" />
+                            <span>{registration.phone}</span>
+                          </div>
+                          <div className="flex items-center space-x-1">
+                            <GraduationCap className="w-4 h-4 shrink-0" />
+                            <span className="truncate">{registration.university}</span>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                    
-                    <div className="text-right">
-                      <div className="text-xs sm:text-sm text-gray-500">
-                        {typeof window !== "undefined" 
-                          ? new Date(registration.created_at).toLocaleDateString()
-                          : registration.created_at
-                        }
+
+                      <div className="flex items-center gap-2 shrink-0">
+                        <span className="text-xs text-gray-400 hidden sm:block">
+                          {new Date(registration.created_at).toLocaleDateString()}
+                        </span>
+                        {!isEditing && !isConfirmingDelete && (
+                          <>
+                            <Button size="sm" variant="outline" onClick={() => startEdit(registration)} className="h-8 px-2 text-blue-600 border-blue-200 hover:bg-blue-50">
+                              <Pencil className="w-3.5 h-3.5 mr-1" /> Edit
+                            </Button>
+                            <Button size="sm" variant="outline" onClick={() => setDeleteConfirmId(registration.id)} className="h-8 px-2 text-red-600 border-red-200 hover:bg-red-50">
+                              <Trash2 className="w-3.5 h-3.5 mr-1" /> Delete
+                            </Button>
+                          </>
+                        )}
                       </div>
                     </div>
-                  </div>
 
-                  {/* Badges - Responsive Layout */}
-                  <div className="flex flex-wrap gap-2 mt-3">
-                    {registration.experience && (
-                      <Badge variant="secondary" className="text-xs">
-                        {registration.experience}
-                      </Badge>
+                    {/* Delete confirmation */}
+                    {isConfirmingDelete && (
+                      <div className="mt-3 p-3 bg-red-50 border border-red-200 rounded-lg flex flex-col sm:flex-row sm:items-center gap-3">
+                        <p className="text-sm text-red-700 flex-1">Delete <strong>{registration.name}</strong>? This cannot be undone.</p>
+                        <div className="flex gap-2 shrink-0">
+                          <Button size="sm" variant="destructive" onClick={() => confirmDelete(registration.id)} disabled={isDeleting} className="h-8">
+                            {isDeleting ? <RefreshCw className="w-3.5 h-3.5 animate-spin mr-1" /> : <Trash2 className="w-3.5 h-3.5 mr-1" />}
+                            {isDeleting ? "Deleting…" : "Confirm Delete"}
+                          </Button>
+                          <Button size="sm" variant="outline" onClick={() => setDeleteConfirmId(null)} disabled={isDeleting} className="h-8">
+                            Cancel
+                          </Button>
+                        </div>
+                      </div>
                     )}
-                    {registration.participation_type && (
-                      <Badge variant="outline" className="text-xs">
-                        {registration.participation_type}
-                      </Badge>
+
+                    {/* Inline edit form */}
+                    {isEditing && (
+                      <div className="mt-4 space-y-3">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                          <div>
+                            <Label className="text-xs text-gray-600 mb-1 block">Full Name</Label>
+                            <Input value={editForm.name ?? ""} onChange={(e) => setEditForm((f) => ({ ...f, name: e.target.value }))} className="h-9 text-sm" />
+                          </div>
+                          <div>
+                            <Label className="text-xs text-gray-600 mb-1 block">Phone</Label>
+                            <Input value={editForm.phone ?? ""} onChange={(e) => setEditForm((f) => ({ ...f, phone: e.target.value }))} className="h-9 text-sm" />
+                          </div>
+                          <div>
+                            <Label className="text-xs text-gray-600 mb-1 block">University / Organization</Label>
+                            <Input value={editForm.university ?? ""} onChange={(e) => setEditForm((f) => ({ ...f, university: e.target.value }))} className="h-9 text-sm" />
+                          </div>
+                          <div>
+                            <Label className="text-xs text-gray-600 mb-1 block">Team Name</Label>
+                            <Input value={editForm.team_name ?? ""} onChange={(e) => setEditForm((f) => ({ ...f, team_name: e.target.value }))} placeholder="Optional" className="h-9 text-sm" />
+                          </div>
+                          <div>
+                            <Label className="text-xs text-gray-600 mb-1 block">Experience</Label>
+                            <Select value={editForm.experience ?? ""} onValueChange={(v) => setEditForm((f) => ({ ...f, experience: v }))}>
+                              <SelectTrigger className="h-9 text-sm">
+                                <SelectValue placeholder="Select level" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="beginner">Beginner</SelectItem>
+                                <SelectItem value="intermediate">Intermediate</SelectItem>
+                                <SelectItem value="advanced">Advanced</SelectItem>
+                                <SelectItem value="expert">Expert</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          <div>
+                            <Label className="text-xs text-gray-600 mb-1 block">Participation Type</Label>
+                            <Select value={editForm.participation_type ?? ""} onValueChange={(v) => setEditForm((f) => ({ ...f, participation_type: v }))}>
+                              <SelectTrigger className="h-9 text-sm">
+                                <SelectValue placeholder="Select type" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="workshops">Workshops Only</SelectItem>
+                                <SelectItem value="hackathon">AI Hackathon</SelectItem>
+                                <SelectItem value="startup">Startup Competition</SelectItem>
+                                <SelectItem value="all">Everything</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                        </div>
+                        <div>
+                          <Label className="text-xs text-gray-600 mb-1 block">Interests</Label>
+                          <Textarea value={editForm.interests ?? ""} onChange={(e) => setEditForm((f) => ({ ...f, interests: e.target.value }))} rows={2} className="text-sm resize-none" placeholder="Optional" />
+                        </div>
+                        <div className="flex gap-2 pt-1">
+                          <Button size="sm" onClick={() => saveEdit(registration.id)} disabled={isSaving} className="h-8 bg-blue-600 hover:bg-blue-700 text-white">
+                            <Save className="w-3.5 h-3.5 mr-1" />
+                            {isSaving ? "Saving…" : "Save Changes"}
+                          </Button>
+                          <Button size="sm" variant="outline" onClick={cancelEdit} disabled={isSaving} className="h-8">
+                            <X className="w-3.5 h-3.5 mr-1" /> Cancel
+                          </Button>
+                        </div>
+                      </div>
                     )}
-                    {registration.team_name && (
-                      <Badge variant="default" className="text-xs">
-                        Team: {registration.team_name}
-                      </Badge>
+
+                    {/* Badges (view mode only) */}
+                    {!isEditing && (
+                      <>
+                        <div className="flex flex-wrap gap-2 mt-3">
+                          {registration.attended && (
+                            <Badge className="text-xs bg-green-100 text-green-700 border border-green-300 hover:bg-green-100">
+                              <CheckCircle className="w-3 h-3 mr-1" />
+                              Attended
+                              {registration.attended_at && (
+                                <span className="ml-1 opacity-75">
+                                  · {new Date(registration.attended_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                                </span>
+                              )}
+                            </Badge>
+                          )}
+                          {registration.experience && <Badge variant="secondary" className="text-xs">{registration.experience}</Badge>}
+                          {registration.participation_type && <Badge variant="outline" className="text-xs">{registration.participation_type}</Badge>}
+                          {registration.team_name && <Badge variant="default" className="text-xs">Team: {registration.team_name}</Badge>}
+                        </div>
+                        {registration.interests && (
+                          <div className="mt-2 text-sm text-gray-600">
+                            <strong className="text-gray-700">Interests:</strong> {registration.interests}
+                          </div>
+                        )}
+                      </>
                     )}
                   </div>
-
-                  {registration.interests && (
-                    <div className="mt-3 text-sm text-gray-600">
-                      <strong className="text-gray-700">Interests:</strong> {registration.interests}
-                    </div>
-                  )}
-                </div>
-              ))}
+                )
+              })}
 
               {registrations.length === 0 && (
                 <div className="text-center py-12 text-gray-500">

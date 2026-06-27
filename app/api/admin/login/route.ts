@@ -60,7 +60,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Rate limiting
-    const clientIP = request.ip || request.headers.get('x-forwarded-for') || 'unknown'
+    const clientIP = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown'
     const now = Date.now()
     const attempts = loginAttempts.get(clientIP) || { count: 0, lastAttempt: 0 }
     

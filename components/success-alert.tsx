@@ -8,9 +8,10 @@ interface SuccessAlertProps {
   isOpen: boolean
   onClose: () => void
   userName: string
+  qrCode?: string
 }
 
-export function SuccessAlert({ isOpen, onClose, userName }: SuccessAlertProps) {
+export function SuccessAlert({ isOpen, onClose, userName, qrCode }: SuccessAlertProps) {
   const [isVisible, setIsVisible] = useState(false)
   const [showConfetti, setShowConfetti] = useState(false)
 
@@ -102,6 +103,16 @@ export function SuccessAlert({ isOpen, onClose, userName }: SuccessAlertProps) {
                 <div className="text-xs text-purple-600">Attendees</div>
               </div>
             </div>
+
+            {/* QR Code */}
+            {qrCode && (
+              <div className="bg-gradient-to-b from-blue-50 to-sky-50 rounded-xl p-4 border border-blue-200 text-center">
+                <h4 className="font-bold text-blue-900 mb-1 text-sm">Your Attendance QR Code</h4>
+                <p className="text-xs text-blue-600 mb-3">Show this at the venue to mark your attendance</p>
+                <img src={qrCode} alt="Attendance QR Code" width={160} height={160} className="mx-auto rounded-lg border-2 border-blue-200" />
+                <p className="text-xs text-gray-500 mt-2">Also sent to your email</p>
+              </div>
+            )}
 
             {/* Next Steps */}
             <div className="bg-gradient-to-r from-green-50 to-blue-50 rounded-xl p-4 border border-green-200">

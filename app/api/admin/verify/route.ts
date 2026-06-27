@@ -4,7 +4,7 @@ import { verify } from 'jsonwebtoken'
 
 export async function GET(request: NextRequest) {
   try {
-    const cookieStore = cookies()
+    const cookieStore = await cookies()
     const token = cookieStore.get('admin_token')
 
     if (!token) {
@@ -26,10 +26,12 @@ export async function GET(request: NextRequest) {
     }
 
     try {
-      // Verify JWT token
-      const decoded = verify(token.value, JWT_SECRET, { algorithms: ['HS256'] }) as any
-      
-      // Check if token is expired
+      const decoded = verify(token.value, JWT_SECRET, { algorithms: ['HS256'] }) as {
+        exp?: number
+        role?: string
+        email?: string
+      }
+
       if (decoded.exp && Date.now() >= decoded.exp * 1000) {
         cookieStore.delete('admin_token')
         return NextResponse.json(
@@ -38,7 +40,6 @@ export async function GET(request: NextRequest) {
         )
       }
 
-      // Check if user has admin role
       if (decoded.role !== 'admin') {
         return NextResponse.json(
           { message: 'Insufficient permissions' },
@@ -46,11 +47,10 @@ export async function GET(request: NextRequest) {
         )
       }
 
-      return NextResponse.json({ 
+      return NextResponse.json({
         message: 'Authenticated',
-        user: { email: decoded.email, role: decoded.role }
+        user: { email: decoded.email, role: decoded.role },
       })
-
     } catch (jwtError) {
       if (process.env.NODE_ENV === 'development') {
         console.error('JWT verification failed:', jwtError)
@@ -61,7 +61,6 @@ export async function GET(request: NextRequest) {
         { status: 401 }
       )
     }
-
   } catch (error) {
     if (process.env.NODE_ENV === 'development') {
       console.error('Auth verification error:', error)
@@ -71,4 +70,4 @@ export async function GET(request: NextRequest) {
       { status: 500 }
     )
   }
-} 
+}

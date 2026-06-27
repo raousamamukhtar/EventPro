@@ -1,4 +1,5 @@
 import { neon } from "@neondatabase/serverless"
+import { randomUUID } from "crypto"
 
 // Initialize database connection only if DATABASE_URL is available
 let sql: any = null
@@ -20,6 +21,9 @@ export interface Registration {
   interests?: string
   team_name?: string
   participation_type?: string
+  attendance_token?: string
+  attended?: boolean
+  attended_at?: Date | null
   created_at?: Date
   updated_at?: Date
 }
@@ -38,11 +42,13 @@ export async function createRegistration(registration: Omit<Registration, "id" |
   
   try {
     const sql = getSql()
+    const attendance_token = randomUUID()
     const result = await sql`
-      INSERT INTO registrations (name, email, phone, university, experience, interests, team_name, participation_type)
-      VALUES (${registration.name}, ${registration.email}, ${registration.phone}, ${registration.university}, 
-              ${registration.experience || null}, ${registration.interests || null}, 
-              ${registration.team_name || null}, ${registration.participation_type || null})
+      INSERT INTO registrations (name, email, phone, university, experience, interests, team_name, participation_type, attendance_token)
+      VALUES (${registration.name}, ${registration.email}, ${registration.phone}, ${registration.university},
+              ${registration.experience || null}, ${registration.interests || null},
+              ${registration.team_name || null}, ${registration.participation_type || null},
+              ${attendance_token})
       RETURNING *
     `
     
@@ -133,6 +139,56 @@ export async function getRegistrationStats() {
     }
     throw error
   }
+}
+
+export async function updateRegistration(
+  id: number,
+  fields: Partial<Pick<Registration, "name" | "phone" | "university" | "experience" | "interests" | "team_name" | "participation_type">>
+): Promise<Registration | null> {
+  if (!process.env.DATABASE_URL) throw new Error("Database not configured")
+  const sql = getSql()
+  const result = await sql`
+    UPDATE registrations SET
+      name             = COALESCE(${fields.name ?? null}, name),
+      phone            = COALESCE(${fields.phone ?? null}, phone),
+      university       = COALESCE(${fields.university ?? null}, university),
+      experience       = ${fields.experience ?? null},
+      interests        = ${fields.interests ?? null},
+      team_name        = ${fields.team_name ?? null},
+      participation_type = ${fields.participation_type ?? null},
+      updated_at       = NOW()
+    WHERE id = ${id}
+    RETURNING *
+  `
+  return result[0] || null
+}
+
+export async function deleteRegistration(id: number): Promise<boolean> {
+  if (!process.env.DATABASE_URL) throw new Error("Database not configured")
+  const sql = getSql()
+  const result = await sql`DELETE FROM registrations WHERE id = ${id} RETURNING id`
+  return result.length > 0
+}
+
+export async function markAttendance(attendanceToken: string): Promise<Registration | null> {
+  if (!process.env.DATABASE_URL) throw new Error("Database not configured")
+  const sql = getSql()
+  const result = await sql`
+    UPDATE registrations
+    SET attended = true, attended_at = NOW()
+    WHERE attendance_token = ${attendanceToken} AND attended = false
+    RETURNING *
+  `
+  return result[0] || null
+}
+
+export async function getRegistrationByToken(attendanceToken: string): Promise<Registration | null> {
+  if (!process.env.DATABASE_URL) throw new Error("Database not configured")
+  const sql = getSql()
+  const result = await sql`
+    SELECT * FROM registrations WHERE attendance_token = ${attendanceToken} LIMIT 1
+  `
+  return result[0] || null
 }
 
 export async function exportRegistrationsAsCSV(): Promise<Buffer> {

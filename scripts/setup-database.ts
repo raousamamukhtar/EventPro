@@ -27,17 +27,40 @@ async function setupDatabase() {
         interests TEXT,
         team_name VARCHAR(255),
         participation_type VARCHAR(100),
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        attendance_token VARCHAR(64) UNIQUE,
+        attended BOOLEAN DEFAULT FALSE,
+        attended_at TIMESTAMPTZ,
+        created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
       )
     `
+
+    // Migration: add attendance columns to existing tables
+    await sql`ALTER TABLE registrations ADD COLUMN IF NOT EXISTS attendance_token VARCHAR(64) UNIQUE`
+    await sql`ALTER TABLE registrations ADD COLUMN IF NOT EXISTS attended BOOLEAN DEFAULT FALSE`
+    await sql`ALTER TABLE registrations ADD COLUMN IF NOT EXISTS attended_at TIMESTAMPTZ`
     
+    // Create OTP verification table
+    await sql`
+      CREATE TABLE IF NOT EXISTS registration_otps (
+        id SERIAL PRIMARY KEY,
+        email VARCHAR(255) UNIQUE NOT NULL,
+        otp_hash VARCHAR(255) NOT NULL,
+        registration_data JSONB NOT NULL,
+        expires_at TIMESTAMPTZ NOT NULL,
+        attempts INT DEFAULT 0,
+        created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+      )
+    `
+
     // Create indexes
     await sql`CREATE INDEX IF NOT EXISTS idx_registrations_email ON registrations(email)`
     await sql`CREATE INDEX IF NOT EXISTS idx_registrations_created_at ON registrations(created_at)`
+    await sql`CREATE INDEX IF NOT EXISTS idx_registration_otps_email ON registration_otps(email)`
+    await sql`CREATE INDEX IF NOT EXISTS idx_registration_otps_expires_at ON registration_otps(expires_at)`
     
     console.log("✅ Database setup completed successfully!")
-    console.log("Table 'registrations' created with all necessary indexes.")
+    console.log("Tables 'registrations' and 'registration_otps' created with all necessary indexes.")
     
   } catch (error) {
     console.error("❌ Database setup failed:", error)

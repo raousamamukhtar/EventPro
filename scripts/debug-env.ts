@@ -1,13 +1,10 @@
-import { config } from 'dotenv';
+import { config } from "dotenv"
 
-// Load environment variables
-config({ path: '.env.local' });
+config({ path: ".env.local" })
 
-console.log('🔍 Debugging environment variables...');
-console.log('RESEND_API_KEY:', process.env.RESEND_API_KEY ? '✅ Set' : '❌ Not set');
-console.log('API Key length:', process.env.RESEND_API_KEY?.length || 0);
-console.log('First 10 chars:', process.env.RESEND_API_KEY?.substring(0, 10) || 'N/A');
-
-if (process.env.RESEND_API_KEY) {
-  console.log('📝 Full API Key:', process.env.RESEND_API_KEY);
-} 
+console.log("SMTP_HOST:", process.env.SMTP_HOST ? "Set" : "Not set")
+console.log("SMTP_PORT:", process.env.SMTP_PORT || "587 (default)")
+console.log("SMTP_SECURE:", process.env.SMTP_SECURE || "auto")
+console.log("SMTP_USER:", process.env.SMTP_USER ? "Set" : "Not set")
+console.log("SMTP_PASS:", process.env.SMTP_PASS ? "Set" : "Not set")
+console.log("SMTP_FROM:", process.env.SMTP_FROM ? "Set" : "Not set")
