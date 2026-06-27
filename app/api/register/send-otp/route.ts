@@ -86,7 +86,7 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error("Send OTP error:", error)
     return NextResponse.json(
-      { error: "Failed to send verification code. Please try again." },
+      { error: "Failed to send verification code. Please try again.", debug: error instanceof Error ? error.message : String(error) },
       { status: 500 }
     )
   }
