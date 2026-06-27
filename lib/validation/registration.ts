@@ -57,9 +57,8 @@ export const registrationSchema = z.object({
   teamName: z
     .string()
     .trim()
-    .max(100, "Team name must be at most 100 characters")
-    .optional()
-    .or(z.literal("")),
+    .min(2, "Team name must be at least 2 characters")
+    .max(100, "Team name must be at most 100 characters"),
   participationType: optionalEnum(PARTICIPATION_TYPES),
 })
 
