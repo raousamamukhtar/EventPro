@@ -39,8 +39,9 @@ export const registrationSchema = z.object({
     .min(1, "Phone number is required")
     .refine((value) => {
       const digits = value.replace(/[\s\-()]/g, "")
-      return /^\+?[0-9]{10,15}$/.test(digits)
-    }, "Please enter a valid phone number (10–15 digits)"),
+      // Pakistani numbers: 03XXXXXXXXX, +923XXXXXXXXX, or 923XXXXXXXXX
+      return /^(\+92|92|0)3[0-9]{9}$/.test(digits)
+    }, "Please enter a valid Pakistani phone number (e.g. 03001234567)"),
   university: z
     .string()
     .trim()

@@ -4,9 +4,19 @@ import { randomUUID } from "crypto"
 // Initialize database connection only if DATABASE_URL is available
 let sql: any = null
 
+function sanitizeDatabaseUrl(url: string): string {
+  try {
+    const u = new URL(url)
+    u.searchParams.delete("channel_binding")
+    return u.toString()
+  } catch {
+    return url
+  }
+}
+
 function getSql() {
   if (!sql) {
-    sql = neon(process.env.DATABASE_URL!)
+    sql = neon(sanitizeDatabaseUrl(process.env.DATABASE_URL!))
   }
   return sql
 }
